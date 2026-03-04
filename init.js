@@ -12,6 +12,14 @@ async function createTables() {
         role ENUM('admin', 'user') DEFAULT 'admin'
       )
     `);
+    
+    // Insert default admin user
+    await pool.query(`
+      INSERT INTO users (email, username, password, role) 
+      VALUES ('admin@gmail.com', 'admin', '$2b$10$UlCvZVBkvwbPAArbx5CYdOnVNmVO0SZ2GFMwvCdDe51qLjvJMsUD6', 'admin')
+      ON DUPLICATE KEY UPDATE id = id
+    `);
+    console.log("✅ Default admin user created/verified");
 
     // Categories table
     await pool.query(`
@@ -83,6 +91,23 @@ async function createTables() {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
       )
     `);
+
+    // Insert sample data for important dates
+    await pool.query(`
+      INSERT INTO important_dates (intake_name, event_name, event_date, description) VALUES
+      ('Fall 2025', 'Application Opens', '2025-01-15', 'Online application portal opens for Fall 2025 intake'),
+      ('Fall 2025', 'Application Deadline', '2025-03-31', 'Last date to submit applications for Fall 2025'),
+      ('Fall 2025', 'Entrance Exam', '2025-04-15', 'Written entrance examination'),
+      ('Fall 2025', 'Interviews', '2025-05-01', 'Personal interviews for shortlisted candidates'),
+      ('Fall 2025', 'Classes Begin', '2025-08-26', 'First day of classes for Fall 2025'),
+      ('Spring 2026', 'Application Opens', '2025-08-01', 'Online application portal opens for Spring 2026 intake'),
+      ('Spring 2026', 'Application Deadline', '2025-10-15', 'Last date to submit applications for Spring 2026'),
+      ('Spring 2026', 'Entrance Exam', '2025-11-01', 'Written entrance examination'),
+      ('Spring 2026', 'Interviews', '2025-11-15', 'Personal interviews for shortlisted candidates'),
+      ('Spring 2026', 'Classes Begin', '2026-01-13', 'First day of classes for Spring 2026')
+      ON DUPLICATE KEY UPDATE id = id
+    `);
+    console.log("✅ Sample important dates inserted/verified");
 
     console.log("✅ All tables created successfully!");
     process.exit();
