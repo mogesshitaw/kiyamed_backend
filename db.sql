@@ -16,21 +16,39 @@ CREATE TABLE categories (
   name VARCHAR(100) NOT NULL
 );
 
+-- Image table
+CREATE TABLE Image (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  image VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- News table
 CREATE TABLE news (
   id INT AUTO_INCREMENT PRIMARY KEY,
   title VARCHAR(255),
   content LONGTEXT,
-  image_id  int ,
+  image_id INT,
   category_id INT,
   author VARCHAR(100),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (category_id) REFERENCES categories(id),
-  FOREIGN KEY (image_id) REFERENCES image(id)
+  FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL,
+  FOREIGN KEY (image_id) REFERENCES Image(id) ON DELETE SET NULL
 );
-CREATE TABLE Image(
-id INT AUTO_INCREMENT PRIMARY KEY,
-image  VARCHAR(255)
-) ;
+
+-- News_Images table for multiple images
+CREATE TABLE news_images (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  news_id INT NOT NULL,
+  image_id INT NOT NULL,
+  is_featured BOOLEAN DEFAULT FALSE,
+  sort_order INT DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (news_id) REFERENCES news(id) ON DELETE CASCADE,
+  FOREIGN KEY (image_id) REFERENCES Image(id) ON DELETE CASCADE,
+  UNIQUE KEY unique_news_image (news_id, image_id)
+);
+
 CREATE TABLE IF NOT EXISTS feedback (
       id INT AUTO_INCREMENT PRIMARY KEY,
       name VARCHAR(255) NOT NULL,

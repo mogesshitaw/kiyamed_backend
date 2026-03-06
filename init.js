@@ -2,6 +2,23 @@ import pool from "./config/db.js";
 
 async function createTables() {
   try {
+
+    // Add this at the beginning of the try block to drop existing tables
+await pool.query(`SET FOREIGN_KEY_CHECKS = 0`);
+await pool.query(`DROP TABLE IF EXISTS news_images`);
+await pool.query(`DROP TABLE IF EXISTS news`);
+await pool.query(`DROP TABLE IF EXISTS Image`);
+await pool.query(`DROP TABLE IF EXISTS categories`);
+await pool.query(`DROP TABLE IF EXISTS users`);
+await pool.query(`DROP TABLE IF EXISTS feedback`);
+await pool.query(`DROP TABLE IF EXISTS applications`);
+await pool.query(`DROP TABLE IF EXISTS important_dates`);
+await pool.query(`SET FOREIGN_KEY_CHECKS = 1`);
+console.log("✅ Dropped existing tables");
+
+
+    console.log("🚀 Starting database initialization...");
+    
     // Users table
     await pool.query(`
       CREATE TABLE IF NOT EXISTS users (
@@ -12,6 +29,7 @@ async function createTables() {
         role ENUM('admin', 'user') DEFAULT 'admin'
       )
     `);
+    console.log("✅ Users table created");
     
     // Insert default admin user
     await pool.query(`
@@ -19,7 +37,7 @@ async function createTables() {
       VALUES ('admin@gmail.com', 'admin', '$2b$10$UlCvZVBkvwbPAArbx5CYdOnVNmVO0SZ2GFMwvCdDe51qLjvJMsUD6', 'admin')
       ON DUPLICATE KEY UPDATE id = id
     `);
-    console.log("✅ Default admin user created/verified");
+    console.log("✅ Default admin user created/verified (username: admin, password: 123456)");
 
     // Categories table
     await pool.query(`
@@ -28,14 +46,17 @@ async function createTables() {
         name VARCHAR(100) NOT NULL
       )
     `);
+    console.log("✅ Categories table created");
 
-    // Image table (must create before news table)
+    // Image table (renamed to Image with capital I as per your spec)
     await pool.query(`
-      CREATE TABLE IF NOT EXISTS image (
+      CREATE TABLE IF NOT EXISTS Image (
         id INT AUTO_INCREMENT PRIMARY KEY,
-        image VARCHAR(255)
+        image VARCHAR(255) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
+    console.log("✅ Image table created");
 
     // News table
     await pool.query(`
@@ -47,10 +68,27 @@ async function createTables() {
         category_id INT,
         author VARCHAR(100),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (category_id) REFERENCES categories(id),
-        FOREIGN KEY (image_id) REFERENCES image(id)
+        FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL,
+        FOREIGN KEY (image_id) REFERENCES Image(id) ON DELETE SET NULL
       )
     `);
+    console.log("✅ News table created");
+
+    // News_Images table for multiple images
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS news_images (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        news_id INT NOT NULL,
+        image_id INT NOT NULL,
+        is_featured BOOLEAN DEFAULT FALSE,
+        sort_order INT DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (news_id) REFERENCES news(id) ON DELETE CASCADE,
+        FOREIGN KEY (image_id) REFERENCES Image(id) ON DELETE CASCADE,
+        UNIQUE KEY unique_news_image (news_id, image_id)
+      )
+    `);
+    console.log("✅ News_images table created");
 
     // Feedback table
     await pool.query(`
@@ -64,6 +102,7 @@ async function createTables() {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
+    console.log("✅ Feedback table created");
 
     // Applications table
     await pool.query(`
@@ -78,6 +117,7 @@ async function createTables() {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
+    console.log("✅ Applications table created");
 
     // Important Dates table
     await pool.query(`
@@ -91,6 +131,7 @@ async function createTables() {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
       )
     `);
+    console.log("✅ Important_dates table created");
 
     // Insert sample data for important dates
     await pool.query(`
@@ -109,8 +150,18 @@ async function createTables() {
     `);
     console.log("✅ Sample important dates inserted/verified");
 
-    console.log("✅ All tables created successfully!");
-    process.exit();
+    console.log("\n🎉 All tables created successfully!");
+    console.log("\n📊 Database Schema Summary:");
+    console.log("- Users table (with admin user: admin/123456)");
+    console.log("- Categories table");
+    console.log("- Image table");
+    console.log("- News table");
+    console.log("- News_images table (for multiple images per news)");
+    console.log("- Feedback table");
+    console.log("- Applications table");
+    console.log("- Important_dates table (with sample data)");
+    
+    process.exit(0);
   } catch (error) {
     console.error("❌ Error creating tables:", error);
     process.exit(1);
